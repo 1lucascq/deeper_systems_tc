@@ -1,48 +1,43 @@
 <script lang="ts" setup>
-import type { CreateUser, User } from '@/userDTO'
+import type { CreateUserDTO, UpdateUserDTO, User } from '@/userDTO'
 import { ref, watch, computed } from 'vue'
 
-// Define props with types
 const props = defineProps<{
     modelValue: boolean
     user: User | null
 }>()
 
-const isEdit = ref<boolean>(props.user !== null ? true : false)
-
-// Define emitted events with types
 const emit = defineEmits<{
     (e: 'update:modelValue', value: boolean): void
-    (e: 'save', userData: User): void
-    (e: 'create', userData: CreateUser): void
+    (e: 'updateUser', userData: UpdateUserDTO): void
+    (e: 'create', userData: CreateUserDTO): void
 }>()
+
+const allRoles = ['admin', 'manager', 'editor', 'user']
+const isEditMode = computed<boolean>(() => !!props.user?._id)
 
 // Local copy of the dialog visibility
 const localVisible = ref<boolean>(props.modelValue)
 
-// Default user values for creation
-const defaultUser: User = {
+watch(localVisible, (val) => {
+    emit('update:modelValue', val)
+})
+
+
+const baseUserData: CreateUserDTO = {
     username: '',
     password: '',
     roles: [],
     preferences: { timezone: '' },
     active: true,
-    created_ts: Date.now(),
-    updated_at: Date.now(),
 }
 
-// Local copy of user data (for both create and edit)
-const localUser = ref<User>(
-    props.user ? JSON.parse(JSON.stringify(props.user)) : { ...defaultUser },
+// Local copy of user data (for both create and update)
+const localUser = ref<UpdateUserDTO | CreateUserDTO>(
+    props.user ? JSON.parse(JSON.stringify(props.user)) : { ...baseUserData },
 )
 
-// List of available roles (this could be fetched from an API)
-const allRoles = ref<string[]>(['is_user_admin', 'is_user_manager', 'is_user_editor'])
-
-// Computed property to determine edit mode
-const isEditMode = computed<boolean>(() => props.user !== null && props.user._id !== undefined)
-
-// Watch for external changes to the modelValue
+// Watcher to define localUser value
 watch(
     () => props.modelValue,
     (val) => {
@@ -50,24 +45,25 @@ watch(
         if (val && props.user) {
             localUser.value = JSON.parse(JSON.stringify(props.user))
         } else if (val) {
-            localUser.value = { ...defaultUser }
+            localUser.value = { ...baseUserData }
         }
     },
     { immediate: true },
 )
-
-// Emit changes when localVisible changes
-watch(localVisible, (val) => {
-    emit('update:modelValue', val)
-})
 
 function close(): void {
     localVisible.value = false
 }
 
 function submit(): void {
-    if (isEdit.value) {
-        emit('save', { ...localUser.value } as User)
+    if (isEditMode.value) {
+        const updateData = {
+            username: localUser.value.username,
+            roles: localUser.value.roles,
+            preferences: localUser.value.preferences,
+            active: localUser.value.active,
+        }
+        emit('updateUser', updateData)
     } else {
         const newUser = {
             username: localUser.value.username,
@@ -75,9 +71,7 @@ function submit(): void {
             roles: localUser.value.roles,
             preferences: localUser.value.preferences,
             active: true,
-            created_ts: localUser.value.created_ts,
-            updated_at: localUser.value.updated_at,
-        } as CreateUser
+        } as CreateUserDTO
         emit('create', newUser)
     }
     close()
@@ -112,7 +106,7 @@ function submit(): void {
                         chips
                     ></v-combobox>
                     <v-text-field
-                        v-model="localUser.preferences.timezone"
+                        v-model="localUser.preferences!.timezone"
                         label="Timezone"
                     ></v-text-field>
                     <v-checkbox

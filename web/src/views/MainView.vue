@@ -1,22 +1,14 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
+import UserService from '@/api/UserService'
 import UserDialog from '@/components/UserDialog.vue'
-import type { CreateUserDTO, User } from '@/userDTO'
-import { UserService } from '@/api/UserService'
-
+import DeleteDialog from '@/components/DeleteDialog.vue'
+import UsersTable from '@/components/UsersTable.vue'
+import type { CreateUserDTO, UpdateUserDTO, User } from '@/userDTO'
 
 const users = ref<User[]>([])
-const headers = [
-    { title: 'Username', key: 'username' },
-    { title: 'Roles', key: 'roles' },
-    { title: 'Timezone', key: 'preferences.timezone' },
-    { title: 'Is Active?', key: 'active' },
-    { title: 'Last Updated At', key: 'updated_at' },
-    { title: 'Created At', key: 'created_ts' },
-    { title: 'Actions', key: 'actions' },
-]
 
-// Dialog state management
+//  --> Open/Close Dialogs state management <--  //
 const editCreateDialogVisible = ref<boolean>(false)
 const selectedUser = ref<User | null>(null)
 const deleteDialogVisible = ref<boolean>(false)
@@ -32,12 +24,8 @@ function openEditDialog(userId: string) {
     editCreateDialogVisible.value = true
 }
 
-function confirmDelete(userId: string) {
-    userToDelete.value = users.value.find((u) => u._id === userId)!
-    deleteDialogVisible.value = true
-}
-
-async function saveUser(userData: User) {
+//  --> Create/Delete/Update users <--  //
+async function updateUser(userData: UpdateUserDTO) {
     try {
         if (selectedUser.value) {
             await UserService.updateUser(selectedUser.value._id, userData)
@@ -47,93 +35,71 @@ async function saveUser(userData: User) {
         editCreateDialogVisible.value = false
     } catch (error) {
         console.error('Failed to update user:', error)
-    }}
+    }
+}
 
 async function createUser(userData: CreateUserDTO) {
-    console.log(userData)
     editCreateDialogVisible.value = false
+    // UserService.createUser(userData)
+    //     .then((newUser) => {
+    //         users.value = [...users.value, newUser]
+    //     })
+    //     .catch((error) => {
+    //         console.error('Failed to create user:', error)
+    //     })
 }
 
 async function deleteUser() {
     if (userToDelete.value) {
-        users.value = users.value.filter((u) => u._id !== userToDelete.value!._id)
-        deleteDialogVisible.value = false
+        try {
+            await UserService.deleteUser(userToDelete.value._id)
+            users.value = users.value.filter((u) => u._id !== userToDelete.value!._id)
+            deleteDialogVisible.value = false
+        } catch (error) {
+            console.error('Failed to delete user:', error)
+        }
     }
+}
+
+function confirmDelete(userId: string) {
+    userToDelete.value = users.value.find((u) => u._id === userId)!
+    deleteDialogVisible.value = true
 }
 
 onMounted(async () => {
     try {
         users.value = await UserService.getUsers()
-        console.log(users.value)
     } catch (error) {
         console.error('Failed to fetch users:', error)
     }
 })
-
 </script>
 
 <template>
     <v-app>
         <v-container fluid>
-            <v-data-table :items="users" :headers="headers" item-key="_id">
-                <template v-slot:top>
-                    <v-row>
-                        <v-col cols="12">
-                            <v-btn color="primary" @click="openCreateDialog"> Create User </v-btn>
-                        </v-col>
-                    </v-row>
-                </template>
-                <template v-slot:item="props">
-                    <td>
-                        <RouterLink :to="{ name: 'userDetails', params: { id: props.item._id } }">
-                            {{ props.item.username }}
-                        </RouterLink>
-                    </td>
-                    <td>{{ props.item.roles }}</td>
-                    <td>{{ props.item.preferences.timezone }}</td>
-                    <td>{{ props.item.active }}</td>
-                    <td>{{ props.item.updated_at }}</td>
-                    <td>{{ props.item.created_ts }}</td>
-                    <td>
-                        <v-icon
-                            @click="openEditDialog(props.item._id!)"
-                            class="mr-2"
-                            color="primary"
-                        >
-                            mdi-pencil
-                        </v-icon>
-                        <v-icon @click="confirmDelete(props.item._id!)" color="red">
-                            mdi-delete
-                        </v-icon>
-                    </td>
-                </template>
-            </v-data-table>
+            <UsersTable
+                :users="users"
+                @edit="openEditDialog"
+                @delete="confirmDelete"
+                @create="openCreateDialog"
+            />
 
             <!-- Create/Edit User Dialog -->
             <UserDialog
                 :model-value="editCreateDialogVisible"
                 :user="selectedUser"
                 @update:modelValue="(val) => (editCreateDialogVisible = val)"
-                @save="saveUser"
+                @updateUser="updateUser"
                 @create="createUser"
             />
 
             <!-- Delete Confirmation Dialog -->
-            <v-dialog v-model="deleteDialogVisible" max-width="500">
-                <v-card>
-                    <v-card-title class="headline"> Confirm Delete </v-card-title>
-                    <v-card-text>
-                        Are you sure you want to delete user
-                        <strong>{{ userToDelete?.username }}</strong
-                        >?
-                    </v-card-text>
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn text="buttonM1" @click="deleteDialogVisible = false"> Cancel </v-btn>
-                        <v-btn color="red" text="buttonM2" @click="deleteUser"> Delete </v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
+            <DeleteDialog
+                v-model="deleteDialogVisible"
+                :user="userToDelete"
+                @confirm="deleteUser"
+            />
         </v-container>
     </v-app>
 </template>
