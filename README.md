@@ -76,10 +76,9 @@ docker-compose up -d
    ```
 
 3. Activate the virtual environment:
-   - On macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
+    ```bash
+    source venv/bin/activate
+    ```
 
 4. Install the required dependencies:
    ```bash
