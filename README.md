@@ -1,30 +1,73 @@
-# FILE: /flask-vue-app/flask-vue-app/README.md
-
 # Flask Vue App
 
-This project is a full-stack application built with Python Flask for the backend and Vue.js with Vuetify for the frontend, following the MVC architecture.
+This project is a full-stack application built with Python Flask for the backend and Vue.js with Vuetify for the frontend as a Tech Challenge for the Deeper System role as Entry-Level Web Developer.
 
 ## Project Structure
 
 ```
-flask-vue-app
-├── backend
-│   ├── app
-│   ├── tests
+deeper_systems/
+├── docker-compose.yaml
+├── README.md
+├── server/
+│   ├── __pycache__/
+│   ├── .gitignore
+│   ├── app.py
+│   ├── clean_db.py
+│   ├── config.py
+│   ├── database.py
+│   ├── models.py
+│   ├── parser.py
 │   ├── requirements.txt
-│   └── run.py
-├── frontend
-│   ├── src
-│   ├── package.json
-│   └── vue.config.js
-└── .gitignore
+│   ├── udata.json
+│   └── views.py
+└── web/
+    ├── .editorconfig
+    ├── .gitattributes
+    ├── .gitignore
+    ├── .prettierrc.json
+    ├── .vscode/
+    ├── env.d.ts
+    ├── eslint.config.ts
+    ├── index.html
+    ├── package.json
+    ├── public/
+    ├── README.md
+    ├── src/
+    │   ├── api/
+    │   │   └── UserService.ts
+    │   ├── assets/
+    │   │   ├── base.css
+    │   │   └── main.css
+    │   ├── components/
+    │   │   ├── ConfirmDialog.vue
+    │   │   ├── DeleteDialog.vue
+    │   │   ├── UserDialog.vue
+    │   │   └── UsersTable.vue
+    │   ├── router/
+    │   │   └── index.ts
+    │   ├── views/
+    │   │   ├── MainView.vue
+    │   │   └── UserDetails.vue
+    │   ├── App.vue
+    │   ├── main.ts
+    │   └── userDTO.ts
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.node.json
+    └── vite.config.ts
+```
+
+## Database
+1. Start the docker container with the MongoDB server
+```
+docker-compose up -d
 ```
 
 ## Backend Setup
 
 1. Navigate to the `backend` directory:
    ```bash
-   cd backend
+   cd server
    ```
 
 2. Create a Python virtual environment:
@@ -33,10 +76,6 @@ flask-vue-app
    ```
 
 3. Activate the virtual environment:
-   - On Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
    - On macOS/Linux:
      ```bash
      source venv/bin/activate
@@ -49,37 +88,25 @@ flask-vue-app
 
 5. Run the Flask application:
    ```bash
-   python run.py
+   python app.py
    ```
 
 ## Frontend Setup
 
 1. Navigate to the `frontend` directory:
    ```bash
-   cd frontend
+   cd web
    ```
 
 2. Install the required dependencies:
    ```bash
-   npm install
+   npm i
    ```
 
 3. Run the Vue.js application:
    ```bash
-   npm run serve
+   npm run dev
    ```
 
-## Testing
 
-To run tests for the backend, ensure you have the necessary dependencies installed and run:
-```bash
-pytest
-```
-
-## GitHub Repository
-
-This project is versioned in a GitHub repository. Make sure to commit your changes and push them to the remote repository regularly.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.
+**Note:** The *gist* with the instructions specifies that the database shouldn't have an *updated_at* or *updated_ts* field, but later this info is requested, so I added this field in the User model.
