@@ -10,6 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const userId = route.params.id as string
 const user = ref<User | null>(null)
+const loading = ref(true)
 
 // Dialog controls
 const editDialogVisible = ref(false)
@@ -43,13 +44,22 @@ onMounted(async () => {
         user.value = (await UserService.getUser(userId)) as User
     } catch (error) {
         console.error('Failed to fetch user:', error)
+    } finally {
+        loading.value = false
     }
 })
 </script>
 
 <template>
     <v-container v-if="user">
-        <v-card>
+        <v-row v-if="loading" justify="center" align="center">
+            <v-progress-circular
+                indeterminate
+                color="primary"
+                size="64"
+            ></v-progress-circular>
+        </v-row>
+        <v-card v-else-if="user">
             <v-card-title class="d-flex justify-space-between align-center">
                 <h1>User Details</h1>
                 <div>
