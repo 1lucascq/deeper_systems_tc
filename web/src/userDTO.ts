@@ -3,20 +3,22 @@ interface UserPreferences {
 }
 
 export interface User {
-    _id?: string
+    _id: string
     username: string
     password: string
     roles: string[]
     preferences: UserPreferences
-    updated_at: number
     active: boolean
+    updated_ts: number
     created_ts: number
 }
 
-export interface CreateUser {
+export interface CreateUserDTO {
     username: string
     password: string
     roles: string[]
     preferences: UserPreferences
     active: boolean
 }
+
+export interface UpdateUserDTO extends Partial<User> {}
