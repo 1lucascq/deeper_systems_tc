@@ -1,22 +1,11 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import UserDialog from '@/components/UserDialog.vue'
-import type { CreateUser, User } from '@/userDTO'
+import type { CreateUserDTO, User } from '@/userDTO'
+import { UserService } from '@/api/UserService'
 
-// Sample user data (replace with real API calls as needed)
-const users = ref<User[]>([
-    {
-        _id: '123',
-        username: 'john_doe',
-        password: 'hashed_password',
-        roles: ['is_user_admin', 'is_user_manager'],
-        preferences: { timezone: 'UTC' },
-        updated_at: 1634330000,
-        active: true,
-        created_ts: 1634330000,
-    },
-])
 
+const users = ref<User[]>([])
 const headers = [
     { title: 'Username', key: 'username' },
     { title: 'Roles', key: 'roles' },
@@ -33,37 +22,54 @@ const selectedUser = ref<User | null>(null)
 const deleteDialogVisible = ref<boolean>(false)
 const userToDelete = ref<User | null>(null)
 
-function openCreateDialog(): void {
+function openCreateDialog() {
     selectedUser.value = null
     editCreateDialogVisible.value = true
 }
 
-function openEditDialog(userId: string): void {
+function openEditDialog(userId: string) {
     selectedUser.value = { ...users.value.find((u) => u._id === userId)! }
     editCreateDialogVisible.value = true
 }
 
-function confirmDelete(userId: string): void {
+function confirmDelete(userId: string) {
     userToDelete.value = users.value.find((u) => u._id === userId)!
     deleteDialogVisible.value = true
 }
 
-function saveUser(userData: Partial<User>): void {
+async function saveUser(userData: User) {
+    try {
+        if (selectedUser.value) {
+            await UserService.updateUser(selectedUser.value._id, userData)
+            // Refresh users list
+            users.value = await UserService.getUsers()
+        }
+        editCreateDialogVisible.value = false
+    } catch (error) {
+        console.error('Failed to update user:', error)
+    }}
+
+async function createUser(userData: CreateUserDTO) {
     console.log(userData)
     editCreateDialogVisible.value = false
 }
 
-function createUser(userData: CreateUser): void {
-    console.log(userData)
-    editCreateDialogVisible.value = false
-}
-
-function deleteUser(): void {
+async function deleteUser() {
     if (userToDelete.value) {
         users.value = users.value.filter((u) => u._id !== userToDelete.value!._id)
         deleteDialogVisible.value = false
     }
 }
+
+onMounted(async () => {
+    try {
+        users.value = await UserService.getUsers()
+        console.log(users.value)
+    } catch (error) {
+        console.error('Failed to fetch users:', error)
+    }
+})
+
 </script>
 
 <template>
